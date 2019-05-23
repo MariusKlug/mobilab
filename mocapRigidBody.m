@@ -510,7 +510,8 @@ classdef mocapRigidBody < dataStream
             for channel = 1:obj.numberOfChannels
                 
                 if ~isempty(strfind(lower(obj.label{channel}),'rigid_z')) ||...
-                        ~isempty(strfind(lower(obj.label{channel}),'quat_x')) ||...
+                        ~isempty(strfind(lower(obj.label{channel}),'pos_z')) ||...
+						~isempty(strfind(lower(obj.label{channel}),'quat_x')) ||...
                         ~isempty(strfind(lower(obj.label{channel}),'quat_y')) ||...
                         ~isempty(strfind(lower(obj.label{channel}),'euler_yaw')) ||...
                         ~isempty(strfind(lower(obj.label{channel}),'euler_pitch'))
@@ -528,7 +529,7 @@ classdef mocapRigidBody < dataStream
         %%
         function cobj = quaternionsToEuler(obj,varargin)
             % Transforms Quaternion angle values (4 dimensions) into Euler angles (3 dimensions yaw, pitch, roll) to
-            % make them human-interpretable
+            % make them human-interpretable. Quat values will be taken out, and Euler angles will be assigned as new channels
             %
             % Input arguments:
             %       none.
@@ -543,7 +544,7 @@ classdef mocapRigidBody < dataStream
             for channel = 1:obj.numberOfChannels
                 
                 % checking for already present eulers
-                if ~isempty(strfind(obj.label{channel},'Euler'))
+                if ~isempty(strfind(lower(obj.label{channel}),'euler'))
                     error('Don''t try to convert to Euler twice... that''s kinda obvious, isn''t it?')
                 end
                 
@@ -554,35 +555,46 @@ classdef mocapRigidBody < dataStream
             % XYZABCD, from which ABCD are the quaternion values
  
             data = obj.mmfObj.Data.x;
-            newData = zeros(size(obj.mmfObj.Data.x,1),size(obj.mmfObj.Data.x,2) - 1);
-            newLabel = cell(obj.numberOfChannels-1,1);
+            newData = zeros(size(obj.mmfObj.Data.x,1),0);
+            newLabel = cell(0,1);
             % the new Euler data has 1 channel less than the quaternions
             
             % fill the new data set and its label with all initial position data
-            newLabel(1:3) = obj.label(1:3);
-            newData(:,1:3) = obj.mmfObj.Data.x(:,1:3);
+			
+			non_quat_indices = cellfun(@isempty,strfind(lower(obj.label),'quat'));
+			
+            newLabel(1:sum(non_quat_indices)) = obj.label(non_quat_indices);
+            newData(:,1:sum(non_quat_indices)) = obj.mmfObj.Data.x(:,non_quat_indices);
             
             % fill also with additional data if there are more channels
             % than just 7
-            
-            numberOfExcessChannels = obj.numberOfChannels - 7;
-            
-            if numberOfExcessChannels > 0
-                
-                newLabel(7:(7+numberOfExcessChannels-1)) = obj.label(8:(7+numberOfExcessChannels));
-                newData(:,7:(7+numberOfExcessChannels-1)) = obj.mmfObj.Data.x(:,8:(7+numberOfExcessChannels));
-                
-            end
+%             
+%             numberOfExcessChannels = obj.numberOfChannels - 7;
+%             
+%             if numberOfExcessChannels > 0
+%                 
+%                 newLabel(7:(7+numberOfExcessChannels-1)) = obj.label(8:(7+numberOfExcessChannels));
+%                 newData(:,7:(7+numberOfExcessChannels-1)) = obj.mmfObj.Data.x(:,8:(7+numberOfExcessChannels));
+%                 
+%             end
             
             
             % now fill with euler data
+			
+			quat_indices = ~cellfun(@isempty,strfind(lower(obj.label),'quat'));
+			assert(sum(quat_indices)==4,'There must be exactly 4 quaternion channels containing the label ''quat_<x,y,z,w>''!')
+			
             
             % find correct channelnumber for the quaternion values of
             % this RB
             quaternionX = ~cellfun(@isempty,strfind(lower(obj.label),'quat_x'));
+			assert(sum(quaternionX)==1,'There must be exactly 1 quaternion channel containing the label ''quat_x''!')
             quaternionY = ~cellfun(@isempty,strfind(lower(obj.label),'quat_y'));
+			assert(sum(quaternionY)==1,'There must be exactly 1 quaternion channel containing the label ''quat_y''!')
             quaternionZ = ~cellfun(@isempty,strfind(lower(obj.label),'quat_z'));
+			assert(sum(quaternionZ)==1,'There must be exactly 1 quaternion channel containing the label ''quat_z''!')
             quaternionW = ~cellfun(@isempty,strfind(lower(obj.label),'quat_w'));
+			assert(sum(quaternionW)==1,'There must be exactly 1 quaternion channel containing the label ''quat_w''!')
             
             % take the values
             % The orientation axes' labels in PhaseSpace are different from the
@@ -640,13 +652,14 @@ classdef mocapRigidBody < dataStream
             
             % actually fill new data set and labels
             
-            newData(:,4) = channelEulerYaw;
-            newData(:,5) = channelEulerPitch;
-            newData(:,6) = channelEulerRoll;
+            newData(:,end+1) = channelEulerYaw;
+            newData(:,end+1) = channelEulerPitch;
+            newData(:,end+1) = channelEulerRoll;
             
-            newLabel{4} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'Euler_Yaw');
-            newLabel{5} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'Euler_Pitch');
-            newLabel{6} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'Euler_Roll');
+			% take the original prefix before 'quat_x' as a prefix for all new euler channels
+            newLabel{end+1} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'euler_yaw');
+            newLabel{end+1} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'euler_pitch');
+            newLabel{end+1} = strcat(obj.label{4}(1:strfind(lower(obj.label{4}),'quat_x')-1),'euler_roll');
             
             % make new object
             commandHistory.commandName = 'quaternionsToEuler';
@@ -1906,11 +1919,10 @@ classdef mocapRigidBody < dataStream
                     prename = 'deg2rad_';
                     metadata.name = [prename metadata.name];
                     metadata.binFile = fullfile(path,[metadata.name '_' char(metadata.uuid) '_' metadata.sessionUUID '.bin']);
-                    channelsToThrow = commandHistory.varargin{2};
-                    metadata.numberOfChannels = length(channelsToThrow);
-                    metadata.label = obj.label(channelsToThrow);
-                    metadata.artifactMask = obj.artifactMask(:,channelsToThrow);
-                    allocateFile(metadata.binFile,metadata.precision,[length(metadata.timeStamp) length(channelsToThrow)]);
+                    metadata.numberOfChannels = obj.numberOfChannels;
+                    metadata.label = obj.label;
+                    metadata.artifactMask = obj.artifactMask;
+                    allocateFile(metadata.binFile,metadata.precision,[length(metadata.timeStamp) metadata.numberOfChannels]);
                     
                 case 'oneEuroFilter'
                     prename = 'oneEuroFilter_';

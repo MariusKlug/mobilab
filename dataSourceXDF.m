@@ -359,28 +359,30 @@ classdef dataSourceXDF < dataSource
                         % rigidBody
                         elseif ~isempty(strfind(lower(streams{stream_count}.info.type),'rigidbody'))
                             
-                            class = 'mocapRigidBody'; % phasespace mocap class with rigidbodies with orientation
+                            class = 'mocapRigidBody'; % mocap class with rigidbodies with position and orientation
                             
-                            indPosition = ~cellfun(@isempty,strfind(channelType,'Position')); % find channels with position value
-                            indOrientation = ~cellfun(@isempty,strfind(channelType,'Orientation')); % find channels with orientation value
-                            ind = indPosition + indOrientation; % channels with both position and orientation
-                            ind(ind > 1) = 1; % just in case a channel name contains both strings
+                            indPosition = ~cellfun(@isempty,strfind(lower(channelType),'pos')); % find channels with position value
+							if sum(indPosition)==0; warning('No position channels found (must contain ''pos'' in the channel types)!'); end
+                            indOrientation = ~cellfun(@isempty,strfind(lower(channelType),'ori')) | ~cellfun(@isempty,strfind(lower(channelType),'quat')); % find channels with orientation value
+                            if sum(indOrientation)==0; warning('No orientation channels found (must contain ''ori'' or ''quat'' in the channel types)!'); end
+                            ind = logical(indPosition + indOrientation); % channels with position or orientation
                             
-                            channels2write = 1:numberOfChannels;
+                            numberOfChannels = sum(ind);
                             
                             unit(~ind) = [];
-                            
                             
                             binFile = [obj.mobiDataDirectory filesep name '_' uuid '_' obj.sessionUUID '.bin'];
                             
                             fid = fopen(binFile,'w');
                             
-                            fwrite(fid,streams{stream_count}.time_series(channels2write,:)',precision);
+                            fwrite(fid,streams{stream_count}.time_series(ind,:)',precision);
                             fclose(fid);
                             
-                            numberOfChannels = length(metadata.label);
+                            auxChannel.label = labels(~ind);
+                            auxChannel.data = streams{stream_count}.time_series(~ind,:)';
+                            
                             metadata.numberOfChannels = numberOfChannels;
-                            metadata.label = labels(channels2write);
+                            metadata.label = labels(ind);
                             metadata.binFile = binFile;
                             metadata.animationParameters = struct('limits',[],'conn',[],'bodymodel',[]);
                             metadata.artifactMask = sparse(length(metadata.timeStamp),metadata.numberOfChannels);
@@ -450,7 +452,11 @@ classdef dataSourceXDF < dataSource
                             header = metadata2headerFile(metadata);
                         
                         % markers    
-                        elseif ~isempty(strfind(lower(streams{stream_count}.info.type),'marker')) || ~isempty(strfind(lower(streams{stream_count}.info.type),'event'))
+                        elseif ~isempty(strfind(lower(streams{stream_count}.info.type),'marker')) ...
+								|| ~isempty(strfind(lower(streams{stream_count}.info.type),'markers'))...
+								|| ~isempty(strfind(lower(streams{stream_count}.info.type),'event'))...
+								|| ~isempty(strfind(lower(streams{stream_count}.info.type),'events'))
+							
                             binFile = [obj.mobiDataDirectory filesep name '_' uuid '_' obj.sessionUUID '.bin'];
                             % markerItems = getItemIndexFromItemNameSimilarTo(obj,'marker');
                             % name = ['markers' num2str(length(markerItems)+1)];

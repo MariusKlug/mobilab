@@ -387,64 +387,64 @@ classdef dataSource < handle
             if nargin < 4, newEEGfile = [];end
             if nargin < 5, updateGui = true;end
             
-            if length(dataObjIndex) == 1
-                if isa(obj.item{dataObjIndex},'eeg')
-                    EEG = obj.item{dataObjIndex}.EEGstructure;
-                    if ~isempty(obj.item{dataObjIndex}.auxChannel.data)
-                        EEG.data = [EEG.data;obj.item{dataObjIndex}.auxChannel.data'];
-                        for it=1:length(obj.item{dataObjIndex}.auxChannel.label)
-                            EEG.chanlocs(end+1).labels = obj.item{dataObjIndex}.auxChannel.label{it};
-                        end
-                        EEG.nbchan = size(EEG.data,1);
-                    end
-                    eventObjIndex = unique([dataObjIndex eventObjIndex]);
-                    eventcodesObj = obj.item(eventObjIndex);
-                    
-                    type    = eventcodesObj{1}.event.label(:);
-                    latency = eventcodesObj{1}.timeStamp(eventcodesObj{1}.event.latencyInFrame(:));
-                    hedTag  = eventcodesObj{1}.event.hedTag(:);
-                    
-                    for it=2:length(eventcodesObj)
-                        if ~isempty(eventcodesObj{it}.event.latencyInFrame)
-                            type = cat(1,type,eventcodesObj{it}.event.label(:));
-                            hedTag = cat(1,hedTag,eventcodesObj{it}.event.hedTag(:));
-                            latency = [latency eventcodesObj{it}.timeStamp(eventcodesObj{it}.event.latencyInFrame)]; %#ok
-                        end
-                    end
-                    latency = obj.item{dataObjIndex}.getTimeIndex(latency);
-                    if ~isempty(latency)
-                        [latency,loc] = sort(latency,'ascend');
-                        type = type(loc);
-                        hedTag = hedTag(loc);
-                        Nevents = length(latency);
-                        EEG.event = repmat(struct('type','','latency',0,'duration',0,'urevent',1,'hedTag',[]),1,Nevents);
-                        disp(['Inserting ' num2str(Nevents) ' events.']);
-                        obj.container.initStatusbar(1,Nevents,'Creating EEG.event...');
-                        for it=1:length(latency)
-                            EEG.event(it).type = type{it};
-                            EEG.event(it).latency = latency(it);
-                            EEG.event(it).hedTag = hedTag{it};
-                            EEG.event(it).urevent = it;
-                            if strcmp(type,'boundary'), EEG.event(it).duration = NaN;end
-                            obj.container.statusbar(it);
-                        end
-                    end
-                    EEG.urevent = EEG.event;
-                    if ~isempty(newEEGfile)
-                        [p,n,e] = fileparts(newEEGfile);
-                        EEG.filename = [n e];
-                        EEG.filepath = p;
-                        pop_saveset( EEG, [n e],p);
-                    end
-                    if updateGui
-                        assignin('base','EEG',EEG);
-                        try
-                            evalin('base','eeglab(''redraw'');');
-                        end
-                    end
-                    return;
-                end
-            end
+%             if length(dataObjIndex) == 1
+%                 if isa(obj.item{dataObjIndex},'eeg')
+%                     EEG = obj.item{dataObjIndex}.EEGstructure;
+%                     if ~isempty(obj.item{dataObjIndex}.auxChannel.data)
+%                         EEG.data = [EEG.data;obj.item{dataObjIndex}.auxChannel.data'];
+%                         for it=1:length(obj.item{dataObjIndex}.auxChannel.label)
+%                             EEG.chanlocs(end+1).labels = obj.item{dataObjIndex}.auxChannel.label{it};
+%                         end
+%                         EEG.nbchan = size(EEG.data,1);
+%                     end
+%                     eventObjIndex = unique([dataObjIndex eventObjIndex]);
+%                     eventcodesObj = obj.item(eventObjIndex);
+%                     
+%                     type    = eventcodesObj{1}.event.label(:);
+%                     latency = eventcodesObj{1}.timeStamp(eventcodesObj{1}.event.latencyInFrame(:));
+%                     hedTag  = eventcodesObj{1}.event.hedTag(:);
+%                     
+%                     for it=2:length(eventcodesObj)
+%                         if ~isempty(eventcodesObj{it}.event.latencyInFrame)
+%                             type = cat(1,type,eventcodesObj{it}.event.label(:));
+%                             hedTag = cat(1,hedTag,eventcodesObj{it}.event.hedTag(:));
+%                             latency = [latency eventcodesObj{it}.timeStamp(eventcodesObj{it}.event.latencyInFrame)]; %#ok
+%                         end
+%                     end
+%                     latency = obj.item{dataObjIndex}.getTimeIndex(latency);
+%                     if ~isempty(latency)
+%                         [latency,loc] = sort(latency,'ascend');
+%                         type = type(loc);
+%                         hedTag = hedTag(loc);
+%                         Nevents = length(latency);
+%                         EEG.event = repmat(struct('type','','latency',0,'duration',0,'urevent',1,'hedTag',[]),1,Nevents);
+%                         disp(['Inserting ' num2str(Nevents) ' events.']);
+%                         obj.container.initStatusbar(1,Nevents,'Creating EEG.event...');
+%                         for it=1:length(latency)
+%                             EEG.event(it).type = type{it};
+%                             EEG.event(it).latency = latency(it);
+%                             EEG.event(it).hedTag = hedTag{it};
+%                             EEG.event(it).urevent = it;
+%                             if strcmp(type,'boundary'), EEG.event(it).duration = NaN;end
+%                             obj.container.statusbar(it);
+%                         end
+%                     end
+%                     EEG.urevent = EEG.event;
+%                     if ~isempty(newEEGfile)
+%                         [p,n,e] = fileparts(newEEGfile);
+%                         EEG.filename = [n e];
+%                         EEG.filepath = p;
+%                         pop_saveset( EEG, [n e],p);
+%                     end
+%                     if updateGui
+%                         assignin('base','EEG',EEG);
+%                         try
+%                             evalin('base','eeglab(''redraw'');');
+%                         end
+%                     end
+%                     return;
+%                 end
+%             end
             
             configEEGLAB
             I = false(length(dataObjIndex),1);
@@ -478,11 +478,11 @@ classdef dataSource < handle
             EEG.filename = name;
             EEG.setname = name;
             EEG.data = [path filesep name '.fdt'];
-            [Ntimepoints,Nchannels,labels,streamObjList,type,latency,hedTag] = alignStreams(EEG,obj.item(dataObjIndex),obj.item(eventObjIndex));
+            [timestamps,Ntimepoints,Nchannels,labels,streamObjList,type,latency,hedTag] = alignStreams(EEG,obj.item(dataObjIndex),obj.item(eventObjIndex));
             EEG.srate = streamObjList{1}.samplingRate;
             EEG.nbchan = Nchannels;
             EEG.pnts = Ntimepoints;
-            EEG.times = 1000*linspace(0,EEG.pnts-1)/EEG.srate;% from seconds to mili-seconds
+            EEG.times = 1000*timestamps; % from seconds to milliseconds
             EEG.xmin  = EEG.times(1);
             EEG.xmax  = EEG.times(end);
             EEG.trials = 1;
@@ -500,10 +500,11 @@ classdef dataSource < handle
                 if k > 1, locChannels = (1:streamObjList{k}.numberOfChannels) + locChannels(end);end
                 switch class(streamObjList{k})
                     case 'eeg'
+							   channelType = 'EEG'
                         if isfield(streamObjList{k}.hardwareMetaData,'desc')
                             for jt=1:streamObjList{k}.numberOfChannels, chanlocs(jt).type = streamObjList{k}.hardwareMetaData.desc.channels.channel{jt}.type;end
                         else
-                            for jt=1:streamObjList{k}.numberOfChannels, chanlocs(jt).type = 'EEG';end
+                            for jt=1:streamObjList{k}.numberOfChannels, chanlocs(jt).type = channelType;end
                         end
                         if ~isempty(streamObjList{k}.channelSpace)
                             for jt=1:streamObjList{k}.numberOfChannels
@@ -514,13 +515,12 @@ classdef dataSource < handle
                                     streamObjList{k}.channelSpace(jt,3));
                                 chanlocs(locChannels(jt)).theta = -chanlocs(locChannels(jt)).theta*180/pi;
                             end
-                        end
-                    case 'dataStream', channelType = 'EEG';
-                    case 'mocap',      channelType = 'MoCap';
-                    case 'mocapRigidBody',  channelType = 'MoCap';
-                    case 'eyeTracking', channelType = 'EyeTracking';
-                    case 'wii',        channelType = 'Wii';
-                    otherwise,         channelType = 'Other';
+								end
+						  case 'mocap',      channelType = 'MOCAP'
+                    case 'mocapRigidBody',  channelType = 'MOCAP'
+                    case 'eyeTracking', channelType = 'EYE'
+                    case 'wii',        channelType = 'Wii'
+                    otherwise,         channelType = 'Other'
                 end
                 for jt=1:streamObjList{k}.numberOfChannels 
                     if ~isa(streamObjList{k},'eeg')
@@ -830,7 +830,7 @@ end
 
 
 %% -------------------------------------------------------------------------
-function [Ntimepoints,Nchannels,labels,streamObj,type,latency,hedTag] = alignStreams(EEG,streamObj,eventcodesObj)
+function [timeStamps,Ntimepoints,Nchannels,labels,streamObj,type,latency,hedTag] = alignStreams(EEG,streamObj,eventcodesObj)
 % bytes = dir(streamObj.binFile);
 % bytes = bytes.bytes/1e9;
 % if bytes < 0.5
@@ -881,7 +881,7 @@ try
         ind = unique(streamObj{it}.getTimeIndex(xi));
         x = streamObj{it}.timeStamp(ind)';
         for ch=1:streamObj{it}.numberOfChannels
-            yi = interp1(x,y(ind,ch),xi,'spline');
+            yi = interp1(x,y(ind,ch),xi,'linear');
             fwrite(tfid,yi(:),precision);
         end
         % if srOld, streamObj{it}.samplingRate = srOld;end
@@ -904,6 +904,11 @@ try
     fclose(fid);
     clear mmfObj
     java.io.File(tmpFile).delete();
+	 timeStamps = xi-xi(1);
+    disc = abs(1./diff(xi)/streamObj{1}.samplingRate-1);
+    if any(disc > 0.24)
+        warning('There may be discontinuities in the data, check EEG.times to be sure and add boundary events if that is the case.');
+    end
     Ntimepoints = Nxi;
     Nchannels = totalNumberOfChannels;
     
