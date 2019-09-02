@@ -366,7 +366,7 @@ classdef mocapRigidBody < dataStream
             for channel = 1:obj.numberOfChannels
                 
                 % checking for already present eulers
-                if ~isempty(strfind(obj.label{channel},'Euler'))
+                if ~isempty(lower(strfind(obj.label{channel}),'euler'))
                     error('You can only unflip Quaternions, try it with the original data set.')
                 end
                 
@@ -991,7 +991,7 @@ classdef mocapRigidBody < dataStream
                         
                         % check if channel is Euler angles and if so,
                         % correct for turns over pi or -pi respectively
-                        if strfind(obj.label{channel},'Euler')
+                        if strfind(lower(obj.label{channel}),'euler')
                             
                             %                             cobj.mmfObj.Data.x(cobj.mmfObj.Data.x > 2*pi, jt) = cobj.mmfObj.Data.x(cobj.mmfObj.Data.x > 2*pi, jt) - 2*pi;
                             %                             cobj.mmfObj.Data.x(cobj.mmfObj.Data.x < -2*pi, jt) = cobj.mmfObj.Data.x(cobj.mmfObj.Data.x < -2*pi, jt) + 2*pi;
