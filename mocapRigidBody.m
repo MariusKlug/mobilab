@@ -366,7 +366,7 @@ classdef mocapRigidBody < dataStream
             for channel = 1:obj.numberOfChannels
                 
                 % checking for already present eulers
-                if ~isempty(lower(strfind(obj.label{channel}),'euler'))
+                if ~isempty(strfind(lower(obj.label{channel}),'euler'))
                     error('You can only unflip Quaternions, try it with the original data set.')
                 end
                 
