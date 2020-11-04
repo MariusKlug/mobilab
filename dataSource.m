@@ -452,11 +452,11 @@ classdef dataSource < handle
             dataObjIndex = dataObjIndex(I);
             if isempty(dataObjIndex), return;end
             loc = (1:length(dataObjIndex))';
-            for k=1:length(dataObjIndex)
-                if ~isempty(obj.item{dataObjIndex(k)}.label{1}) && ~isempty(strfind(lower(obj.item{dataObjIndex(k)}.label{1}),'unknown'))
-                    loc = circshift(loc,1);
-                end
-            end
+%             for k=1:length(dataObjIndex)
+%                 if ~isempty(obj.item{dataObjIndex(k)}.label{1}) && ~isempty(strfind(lower(obj.item{dataObjIndex(k)}.label{1}),'unknown'))
+%                     loc = circshift(loc,1);
+%                 end
+%             end
             dataObjIndex = dataObjIndex(loc);
             eventObjIndex = unique([eventObjIndex(:)' dataObjIndex(:)']);
             
